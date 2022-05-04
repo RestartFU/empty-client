@@ -4,7 +4,7 @@ import (
 	"github.com/restartfu/emp/emp"
 )
 
-type Toggleable interface {
+type Updatable interface {
 	Update(*emp.Handler)
 
 	SetValue(float32)

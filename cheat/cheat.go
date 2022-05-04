@@ -12,17 +12,17 @@ func Register(cheat *Cheat) {
 
 // Cheat contains the information about a cheat and its toggleable.
 type Cheat struct {
-	toggleable []Toggleable
-	handle     *emp.Handler
+	updatable []Updatable
+	handle    *emp.Handler
 
 	name        string
 	description string
 }
 
 // New creates a new cheat.
-func New(name, description string, handle *emp.Handler, toggleable ...Toggleable) *Cheat {
+func New(name, description string, handle *emp.Handler, updatable ...Updatable) *Cheat {
 	return &Cheat{
-		toggleable:  toggleable,
+		updatable:   updatable,
 		handle:      handle,
 		name:        name,
 		description: description,
@@ -41,13 +41,13 @@ func (c *Cheat) Description() string {
 
 // Update enables the cheat.
 func (c *Cheat) Update() {
-	for _, t := range c.toggleable {
+	for _, t := range c.updatable {
 		t.Update(c.handle)
 	}
 }
 
 func (c *Cheat) SetValue(value float32) {
-	for _, t := range c.toggleable {
+	for _, t := range c.updatable {
 		t.SetValue(value)
 	}
 }

@@ -20,9 +20,9 @@ func main() {
 	}
 
 	var actualFov float32
-	readProcessMemory(w32.HANDLE(h.Handle()), 0x1809E9EF098, uintptr(unsafe.Pointer(&actualFov)), unsafe.Sizeof(actualFov))
-	zoom := cheat.NewZoom(0x1809E9EF098)
-
+	zoomAddr := uintptr(0x7FF7D84D05A6)
+	readProcessMemory(w32.HANDLE(h.Handle()), zoomAddr, uintptr(unsafe.Pointer(&actualFov)), unsafe.Sizeof(actualFov))
+	zoom := cheat.NewZoom(win.LPVOID(zoomAddr))
 	go func() {
 		var pressed, status bool
 		for {
@@ -116,4 +116,13 @@ func readProcessMemory(hProcess w32.HANDLE, lpBaseAddress, lpBuffer, nSize uintp
 	)
 
 	return nBytesRead, ret != 0
+}
+func findAddressFromPointer(proc w32.HANDLE, providedPtr uintptr, providedOffsets []uintptr) uintptr {
+	address := providedPtr
+	for _, offset := range providedOffsets {
+		readProcessMemory(proc, address, uintptr(unsafe.Pointer(&address)), unsafe.Sizeof(address))
+		address += offset
+	}
+
+	return address
 }

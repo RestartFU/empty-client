@@ -20,7 +20,14 @@ func main() {
 			c.Update()
 		}
 	}()
-
+	fmt.Println(color.HiCyanString(`
+Type help to see the list of available cheats, and type exit to gracefully exit the program.
+ _____           _       
+|   __|_____ ___| |_ _ _ 
+|   __|     | . |  _| | |
+|_____|_|_|_|  _|_| |_  |
+            |_|     |___|
+`))
 	for {
 		var v string
 		fmt.Print(color.CyanString(">: "))

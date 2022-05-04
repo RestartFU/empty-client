@@ -6,7 +6,6 @@ import (
 	"github.com/kbinani/win"
 	"github.com/restartfu/emp/cheat"
 	"github.com/restartfu/emp/emp"
-	"os"
 )
 
 func main() {
@@ -34,7 +33,10 @@ Type help to see the list of available cheats, and type exit to gracefully exit 
 		_, _ = fmt.Scan(&v)
 		switch v {
 		case "exit":
-			h.Close <- os.Interrupt
+			for _, c := range cheat.All() {
+				c.SetValue(c.DefaultValue())
+				c.Update()
+			}
 			return
 		case "help":
 			fmt.Println(color.HiCyanString("   Available cheats:"))

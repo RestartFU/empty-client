@@ -24,7 +24,7 @@ func main() {
 	zoom := cheat.NewZoom(0x1809E9EF098)
 
 	go func() {
-		var pressed bool
+		var pressed, status bool
 		for {
 			keyState := w32.GetAsyncKeyState(70)
 			if keyState&(1<<15) != 0 {
@@ -32,12 +32,15 @@ func main() {
 			} else {
 				pressed = false
 			}
-			if !pressed {
+			if !pressed && status {
 				zoom.SetValue(actualFov)
-			} else {
+				status = false
+				zoom.Update(h)
+			} else if pressed && !status {
 				zoom.SetValue(10)
+				status = true
+				zoom.Update(h)
 			}
-			zoom.Update(h)
 		}
 	}()
 

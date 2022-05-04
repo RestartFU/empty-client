@@ -5,6 +5,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/kbinani/win"
 	"golang.org/x/sys/windows"
+	"os"
+	"os/signal"
 	"syscall"
 	"time"
 	"unsafe"
@@ -15,6 +17,8 @@ type Handler struct {
 	h         win.HANDLE
 	processID uint32
 	gameID    uintptr
+
+	Close chan os.Signal
 }
 
 // New creates a new emp handler
@@ -29,11 +33,14 @@ func New() *Handler {
 	}
 
 	processID := getGameProcessId()
-	return &Handler{
+	h := &Handler{
 		h:         win.OpenProcess(w32.PROCESS_ALL_ACCESS, true, win.DWORD(processID)),
 		processID: processID,
 		gameID:    getGameModule(processID),
+		Close:     make(chan os.Signal),
 	}
+	signal.Notify(h.Close, os.Interrupt, syscall.SIGTERM)
+	return h
 }
 
 // Handle returns the handle to the game process

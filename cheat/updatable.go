@@ -6,6 +6,5 @@ import (
 
 type Updatable interface {
 	Update(*emp.Handler)
-
 	SetValue(float32)
 }

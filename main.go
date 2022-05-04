@@ -8,6 +8,7 @@ import (
 	"github.com/restartfu/emp/cheat"
 	"github.com/restartfu/emp/emp"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
@@ -41,6 +42,7 @@ func main() {
 				status = true
 				zoom.Update(h)
 			}
+			time.Sleep(time.Millisecond)
 		}
 	}()
 

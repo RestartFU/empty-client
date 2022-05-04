@@ -10,12 +10,14 @@ import (
 	"unsafe"
 )
 
+// Handler is a handler which contains everything you need to know about a process
 type Handler struct {
 	h         win.HANDLE
 	processID uint32
 	gameID    uintptr
 }
 
+// New creates a new emp handler
 func New() *Handler {
 	gameWindow := w32.FindWindowW(nil, windows.StringToUTF16Ptr("Minecraft"))
 	if gameWindow == 0 {
@@ -34,16 +36,22 @@ func New() *Handler {
 	}
 }
 
+// Handle returns the handle to the game process
 func (h *Handler) Handle() win.HANDLE {
 	return h.h
 }
-func (h *Handler) GameID() uintptr {
-	return h.gameID
-}
+
+// ProcessID returns the process ID of the game process
 func (h *Handler) ProcessID() uint32 {
 	return h.processID
 }
 
+// GameID returns the game's module ID
+func (h *Handler) GameID() uintptr {
+	return h.gameID
+}
+
+// getGameProcessId returns the process ID of the game process
 func getGameProcessId() uint32 {
 	var processID uint32
 	snapshotHandle, err := syscall.CreateToolhelp32Snapshot(syscall.TH32CS_SNAPPROCESS, 0)
@@ -69,6 +77,8 @@ func getGameProcessId() uint32 {
 
 	return processID
 }
+
+// getGameModule returns the game's module ID
 func getGameModule(processID uint32) uintptr {
 	var gameModuleAddress uintptr = 0
 	snapshotHandle := w32.CreateToolhelp32Snapshot(syscall.TH32CS_SNAPMODULE|syscall.TH32CS_SNAPMODULE32, processID)

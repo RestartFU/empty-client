@@ -3,15 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/TheTitanrain/w32"
 	"github.com/fatih/color"
 	"github.com/kbinani/win"
 	"github.com/restartfu/emp/cheat"
 	"github.com/restartfu/emp/emp"
 	"os"
 	"strconv"
-	"syscall"
-	"unsafe"
 )
 
 func main() {
@@ -72,24 +69,6 @@ func main() {
 		c.SetValue(c.DefaultValue())
 		c.Update()
 	}
-}
-
-var (
-	modkernel32           = syscall.NewLazyDLL("kernel32.dll")
-	procReadProcessMemory = modkernel32.NewProc("ReadProcessMemory")
-)
-
-func readProcessMemory(hProcess w32.HANDLE, lpBaseAddress, lpBuffer, nSize uintptr) (lpNumberOfBytesRead int, ok bool) {
-	var nBytesRead int
-	ret, _, _ := procReadProcessMemory.Call(
-		uintptr(hProcess),
-		lpBaseAddress,
-		lpBuffer,
-		nSize,
-		uintptr(unsafe.Pointer(&nBytesRead)),
-	)
-
-	return nBytesRead, ret != 0
 }
 
 func welcome() {

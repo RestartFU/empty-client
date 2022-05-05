@@ -1,14 +1,16 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/TheTitanrain/w32"
 	"github.com/fatih/color"
 	"github.com/kbinani/win"
 	"github.com/restartfu/emp/cheat"
 	"github.com/restartfu/emp/emp"
+	"os"
+	"strconv"
 	"syscall"
-	"time"
 	"unsafe"
 )
 
@@ -19,98 +21,57 @@ func main() {
 	} {
 		cheat.Register(c)
 	}
+	welcome()
+	go func() {
+		var enteringValue bool
+		var currentCheat *cheat.Cheat
 
-	var actualFov float32
-	zoomAddr := uintptr(0x7FF7D84D05A6)
-	readProcessMemory(w32.HANDLE(h.Handle()), zoomAddr, uintptr(unsafe.Pointer(&actualFov)), unsafe.Sizeof(actualFov))
-	zoom := cheat.NewZoom(win.LPVOID(zoomAddr))
-	go func() {
-		for {
-			if w32.GetAsyncKeyState(0x01) > 0 {
-				// not actually sending clicks in game for some reason
-				fmt.Println(win.PostMessage(h.GameWindow(), 513, 0, 0))
-				time.Sleep(time.Millisecond * 30)
-				fmt.Println(win.PostMessage(h.GameWindow(), 514, 0, 0))
-			}
-			time.Sleep(time.Millisecond)
-		}
-	}()
-	go func() {
-		var pressed, status bool
-		for {
-			keyState := w32.GetAsyncKeyState(70)
-			if keyState&(1<<15) != 0 {
-				pressed = true
-			} else {
-				pressed = false
-			}
-			if !pressed && status {
-				zoom.SetValue(actualFov)
-				status = false
-				zoom.Update(h)
-			} else if pressed && !status {
-				zoom.SetValue(10)
-				status = true
-				zoom.Update(h)
-			}
-			time.Sleep(time.Millisecond)
-		}
-	}()
-
-	go func() {
-		<-h.Close
-		for _, c := range cheat.All() {
-			c.SetValue(c.DefaultValue())
-			c.Update()
-		}
-		zoom.SetValue(actualFov)
-		zoom.Update(h)
-	}()
-	fmt.Println(color.HiCyanString(`
-Type help to see the list of available cheats, and type exit to gracefully exit the program.
- _____           _       
-|   __|_____ ___| |_ _ _ 
-|   __|     | . |  _| | |
-|_____|_|_|_|  _|_| |_  |
-            |_|     |___|
-`))
-	for {
-		var v string
 		fmt.Print(color.CyanString(">: "))
-		_, _ = fmt.Scan(&v)
-		switch v {
-		case "exit":
-			for _, c := range cheat.All() {
-				c.SetValue(c.DefaultValue())
-				c.Update()
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			text := scanner.Text()
+
+			if enteringValue {
+				v, err := strconv.ParseFloat(text, 32)
+				if err != nil {
+					fmt.Println(color.CyanString("Invalid value"))
+					continue
+				}
+				currentCheat.SetValue(float32(v))
+				currentCheat.Update()
+
+				enteringValue = false
+				currentCheat = nil
+				fmt.Print(color.CyanString(">: "))
+				continue
 			}
-			return
-		case "help":
-			fmt.Println(color.HiCyanString("   Available cheats:"))
-			for _, c := range cheat.All() {
-				fmt.Println(color.CyanString("    %s: %s", c.DisplayName(), c.Description()))
+			switch text {
+			case "exit":
+				os.Exit(0)
+			case "help":
+				fmt.Println(color.HiCyanString(" list of available cheats:"))
+				for _, c := range cheat.All() {
+					fmt.Println(color.CyanString("  %s - %s", c.DisplayName(), c.Description()))
+				}
+				fmt.Print(color.CyanString(">: "))
+			default:
+				c, ok := cheat.ByName(text)
+				if !ok {
+					fmt.Println(color.CyanString("invalid cheat name"))
+					continue
+				}
+				enteringValue = true
+				currentCheat = c
+				fmt.Print(color.CyanString("enter %s value >: ", currentCheat.Name()))
 			}
-			continue
 		}
-		c, ok := cheat.ByName(v)
-		if !ok {
-			fmt.Println(color.CyanString("Invalid cheat name"))
-			continue
-		}
-		fmt.Print(color.CyanString("enter %s value >: ", c.Name()))
-		c.SetValue(scanFloat32())
+		h.Close <- os.Interrupt
+	}()
+	<-h.Close
+	for _, c := range cheat.All() {
+		c.SetValue(c.DefaultValue())
 		c.Update()
 	}
-}
-
-func scanFloat32() float32 {
-	var v float32
-	_, err := fmt.Scan(&v)
-	for err != nil {
-		fmt.Println(color.CyanString("Invalid value"))
-		_, err = fmt.Scan(&v)
-	}
-	return v
 }
 
 var (
@@ -130,12 +91,14 @@ func readProcessMemory(hProcess w32.HANDLE, lpBaseAddress, lpBuffer, nSize uintp
 
 	return nBytesRead, ret != 0
 }
-func findAddressFromPointer(proc w32.HANDLE, providedPtr uintptr, providedOffsets []uintptr) uintptr {
-	address := providedPtr
-	for _, offset := range providedOffsets {
-		readProcessMemory(proc, address, uintptr(unsafe.Pointer(&address)), unsafe.Sizeof(address))
-		address += offset
-	}
 
-	return address
+func welcome() {
+	fmt.Println(color.HiCyanString(`
+Type help to see the list of available cheats, and type exit to gracefully exit the program.
+ _____           _       
+|   __|_____ ___| |_ _ _ 
+|   __|     | . |  _| | |
+|_____|_|_|_|  _|_| |_  |
+            |_|     |___|
+`))
 }

@@ -14,9 +14,10 @@ import (
 
 // Handler is a handler which contains everything you need to know about a process
 type Handler struct {
-	h         win.HANDLE
-	processID uint32
-	gameID    uintptr
+	h          win.HANDLE
+	processID  uint32
+	gameID     uintptr
+	gameWindow win.HWND
 
 	Close chan os.Signal
 }
@@ -34,10 +35,11 @@ func New() *Handler {
 
 	processID := getGameProcessId()
 	h := &Handler{
-		h:         win.OpenProcess(w32.PROCESS_ALL_ACCESS, true, win.DWORD(processID)),
-		processID: processID,
-		gameID:    getGameModule(processID),
-		Close:     make(chan os.Signal),
+		h:          win.OpenProcess(w32.PROCESS_ALL_ACCESS, true, win.DWORD(processID)),
+		processID:  processID,
+		gameID:     getGameModule(processID),
+		gameWindow: win.HWND(gameWindow),
+		Close:      make(chan os.Signal),
 	}
 	signal.Notify(h.Close, os.Interrupt, syscall.SIGTERM)
 	return h
@@ -56,6 +58,11 @@ func (h *Handler) ProcessID() uint32 {
 // GameID returns the game's module ID
 func (h *Handler) GameID() uintptr {
 	return h.gameID
+}
+
+// GameWindow returns the game window
+func (h *Handler) GameWindow() win.HWND {
+	return h.gameWindow
 }
 
 // getGameProcessId returns the process ID of the game process

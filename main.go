@@ -25,6 +25,17 @@ func main() {
 	readProcessMemory(w32.HANDLE(h.Handle()), zoomAddr, uintptr(unsafe.Pointer(&actualFov)), unsafe.Sizeof(actualFov))
 	zoom := cheat.NewZoom(win.LPVOID(zoomAddr))
 	go func() {
+		for {
+			if w32.GetAsyncKeyState(0x01) > 0 {
+				// not actually sending clicks in game for some reason
+				fmt.Println(win.PostMessage(h.GameWindow(), 513, 0, 0))
+				time.Sleep(time.Millisecond * 30)
+				fmt.Println(win.PostMessage(h.GameWindow(), 514, 0, 0))
+			}
+			time.Sleep(time.Millisecond)
+		}
+	}()
+	go func() {
 		var pressed, status bool
 		for {
 			keyState := w32.GetAsyncKeyState(70)

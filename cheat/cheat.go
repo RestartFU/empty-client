@@ -1,6 +1,7 @@
 package cheat
 
 import (
+	"github.com/kbinani/win"
 	"github.com/restartfu/emp/emp"
 	"strings"
 	"sync"
@@ -19,11 +20,10 @@ func Register(cheat *Cheat) {
 }
 
 // ByName returns a cheat by name.
-func ByName(name string) (*Cheat, bool) {
+func ByName(name string) *Cheat {
 	cheatsMu.Lock()
 	defer cheatsMu.Unlock()
-	cheat, ok := cheats[name]
-	return cheat, ok
+	return cheats[name]
 }
 
 // All returns all cheats
@@ -40,22 +40,27 @@ func All() (v []*Cheat) {
 type Cheat struct {
 	updatable []Updatable
 	handle    *emp.Handler
+	address   win.LPVOID
 
-	defaultValue float32
-
-	name        string
-	description string
+	defaultValue      float32
+	name, description string
 }
 
 // New creates a new cheat.
-func New(name, description string, handle *emp.Handler, defaultValue float32, updatable ...Updatable) *Cheat {
+func New(handle *emp.Handler, address uintptr, name, description string, defaultValue float32, updatable ...Updatable) *Cheat {
 	return &Cheat{
 		updatable:    updatable,
 		handle:       handle,
+		address:      win.LPVOID(address),
 		defaultValue: defaultValue,
 		name:         strings.ToLower(name),
 		description:  description,
 	}
+}
+
+// Address returns the address of the cheat.
+func (c *Cheat) Address() win.LPVOID {
+	return c.address
 }
 
 // Name returns the name of the cheat.
@@ -71,7 +76,7 @@ func (c *Cheat) Description() string {
 // Update enables the cheat.
 func (c *Cheat) Update() {
 	for _, t := range c.updatable {
-		t.Update(c.handle)
+		t.Update(c.handle, c.address)
 	}
 }
 

@@ -14,10 +14,12 @@ import (
 
 // Handler is a handler which contains everything you need to know about a process.
 type Handler struct {
-	h          win.HANDLE
-	processID  uint32
-	gameID     uintptr
-	gameWindow win.HWND
+	h win.HANDLE
+
+	processID   uint32
+	gameID      uintptr
+	gameWindow  win.HWND
+	localPlayer uintptr
 
 	Close chan os.Signal
 }
@@ -41,6 +43,7 @@ func New() *Handler {
 		gameWindow: win.HWND(gameWindow),
 		Close:      make(chan os.Signal),
 	}
+	h.localPlayer = h.FindAddressOffset(h.GameID()+0x0549E7F8, []uintptr{0x20, 0x0, 0x18, 0xB8, 0x198, 0x0, 0x0})
 	signal.Notify(h.Close, os.Interrupt, syscall.SIGTERM)
 	return h
 }
@@ -63,6 +66,11 @@ func (h *Handler) GameID() uintptr {
 // GameWindow returns the game window.
 func (h *Handler) GameWindow() win.HWND {
 	return h.gameWindow
+}
+
+// LocalPlayer returns the address of the local player.
+func (h *Handler) LocalPlayer() uintptr {
+	return h.localPlayer
 }
 
 // FindAddressOffset finds returns an address with the given offset.

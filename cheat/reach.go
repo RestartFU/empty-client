@@ -9,24 +9,15 @@ import (
 // Reach is a cheat used to hit players from further away.
 type Reach struct {
 	value float32
-
-	pointer win.LPVOID
-}
-
-// NewReach creates a new reach cheat.
-func NewReach(pointer win.LPVOID) *Reach {
-	return &Reach{
-		pointer: pointer,
-	}
 }
 
 // Update ...
-func (r *Reach) Update(h *emp.Handler) {
+func (r *Reach) Update(h *emp.Handler, address win.LPVOID) {
 	var num win.DWORD
 	var bytesWritten win.SIZE_T
 
-	win.VirtualProtectEx(h.Handle(), r.pointer, 4, 0x40, &num)
-	win.WriteProcessMemory(h.Handle(), r.pointer, uintptr(unsafe.Pointer(&r.value)), 4, &bytesWritten)
+	win.VirtualProtectEx(h.Handle(), address, 4, 0x40, &num)
+	win.WriteProcessMemory(h.Handle(), address, uintptr(unsafe.Pointer(&r.value)), 4, &bytesWritten)
 }
 
 // SetValue ...

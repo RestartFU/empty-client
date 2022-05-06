@@ -11,6 +11,7 @@ var (
 	cheatsMu sync.Mutex
 )
 
+// Register registers a new cheat.
 func Register(cheat *Cheat) {
 	cheatsMu.Lock()
 	cheats[cheat.Name()] = cheat
@@ -43,7 +44,6 @@ type Cheat struct {
 	defaultValue float32
 
 	name        string
-	displayName string
 	description string
 }
 
@@ -54,7 +54,6 @@ func New(name, description string, handle *emp.Handler, defaultValue float32, up
 		handle:       handle,
 		defaultValue: defaultValue,
 		name:         strings.ToLower(name),
-		displayName:  name,
 		description:  description,
 	}
 }
@@ -62,9 +61,6 @@ func New(name, description string, handle *emp.Handler, defaultValue float32, up
 // Name returns the name of the cheat.
 func (c *Cheat) Name() string {
 	return c.name
-}
-func (c *Cheat) DisplayName() string {
-	return c.displayName
 }
 
 // Description returns the description of the cheat.
@@ -79,10 +75,12 @@ func (c *Cheat) Update() {
 	}
 }
 
+// DefaultValue returns the default value of the cheat.
 func (c *Cheat) DefaultValue() float32 {
 	return c.defaultValue
 }
 
+// SetValue sets the value of the cheat.
 func (c *Cheat) SetValue(value float32) {
 	for _, t := range c.updatable {
 		t.SetValue(value)

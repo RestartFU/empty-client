@@ -12,7 +12,7 @@ import (
 	"unsafe"
 )
 
-// Handler is a handler which contains everything you need to know about a process
+// Handler is a handler which contains everything you need to know about a process.
 type Handler struct {
 	h          win.HANDLE
 	processID  uint32
@@ -22,7 +22,7 @@ type Handler struct {
 	Close chan os.Signal
 }
 
-// New creates a new emp handler
+// New creates a new emp handler.
 func New() *Handler {
 	gameWindow := w32.FindWindowW(nil, windows.StringToUTF16Ptr("Minecraft"))
 	if gameWindow == 0 {
@@ -45,24 +45,34 @@ func New() *Handler {
 	return h
 }
 
-// Handle returns the handle to the game process
+// Handle returns the handle to the game process.
 func (h *Handler) Handle() win.HANDLE {
 	return h.h
 }
 
-// ProcessID returns the process ID of the game process
+// ProcessID returns the process ID of the game process.
 func (h *Handler) ProcessID() uint32 {
 	return h.processID
 }
 
-// GameID returns the game's module ID
+// GameID returns the game's module ID.
 func (h *Handler) GameID() uintptr {
 	return h.gameID
 }
 
-// GameWindow returns the game window
+// GameWindow returns the game window.
 func (h *Handler) GameWindow() win.HWND {
 	return h.gameWindow
+}
+
+// FindAddressOffset finds returns an address with the given offset.
+func (h *Handler) FindAddressOffset(providedPtr uintptr, providedOffsets []uintptr) uintptr {
+	address := providedPtr
+	for _, offset := range providedOffsets {
+		win.ReadProcessMemory(h.Handle(), address, win.LPVOID(unsafe.Pointer(&address)), win.SIZE_T(unsafe.Sizeof(address)), nil)
+		address += offset
+	}
+	return address
 }
 
 // getGameProcessId returns the process ID of the game process

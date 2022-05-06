@@ -32,15 +32,14 @@ func main() {
 				continue
 			}
 			if cht := cheat.ByName(input); cht != nil {
-				var value string
 				var v float64
 				f := func() error {
 					fmt.Print(color.CyanString("- %s (DEFAULT: %v) |>: ", strings.ToUpper(cht.Name()), cht.DefaultValue()))
-					_, err := fmt.Scan(&value)
+					_, err := fmt.Scan(&input)
 					if err != nil {
 						return err
 					}
-					v, err = strconv.ParseFloat(value, 32)
+					v, err = strconv.ParseFloat(input, 32)
 					return err
 				}
 				err = f()

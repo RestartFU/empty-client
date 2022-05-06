@@ -1,6 +1,7 @@
 package cheat
 
 import (
+	"fmt"
 	"github.com/kbinani/win"
 	"github.com/restartfu/emp/emp"
 	"unsafe"
@@ -21,6 +22,11 @@ func (r *Reach) Update(h *emp.Handler, address win.LPVOID) {
 }
 
 // SetValue ...
-func (r *Reach) SetValue(value float32) {
-	r.value = value
+func (r *Reach) SetValue(value any) error {
+	v, ok := value.(float64)
+	if !ok {
+		return fmt.Errorf("value must be a float")
+	}
+	r.value = float32(v)
+	return nil
 }

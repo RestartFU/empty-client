@@ -86,8 +86,16 @@ func (c *Cheat) DefaultValue() float32 {
 }
 
 // SetValue sets the value of the cheat.
-func (c *Cheat) SetValue(value float32) {
+func (c *Cheat) SetValue(value any) error {
+	var errors []error
 	for _, t := range c.updatable {
-		t.SetValue(value)
+		err := t.SetValue(value)
+		if err != nil {
+			errors = append(errors, err)
+		}
 	}
+	if len(errors) >= 1 {
+		return errors[0]
+	}
+	return nil
 }

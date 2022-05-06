@@ -1,12 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/kbinani/win"
 	"github.com/restartfu/emp/cheat"
 	"github.com/restartfu/emp/command"
 	"github.com/restartfu/emp/emp"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -32,34 +34,44 @@ func main() {
 				continue
 			}
 			if cht := cheat.ByName(input); cht != nil {
-				var v float64
+				var exit = errors.New("exit")
 				f := func() error {
+					var v any
 					fmt.Print(color.CyanString("- %s (DEFAULT: %v) |>: ", strings.ToUpper(cht.Name()), cht.DefaultValue()))
+
 					_, err := fmt.Scan(&input)
-					if err != nil {
-						return err
-					}
-					v, err = strconv.ParseFloat(input, 32)
-					return err
-				}
-				err = f()
-				for err != nil {
-					if err.Error() == "EOF" {
+					if err != nil && err == io.EOF {
 						os.Exit(0)
 					}
-					color.Cyan("Invalid value\n")
-					err = f()
+					if input == "exit" {
+						return exit
+					}
+
+					v, err = strconv.ParseFloat(input, 32)
+					if err != nil {
+						v = nil
+					}
+
+					err = cht.SetValue(v)
+					if err != nil {
+						color.Red("/~\\ %s /~\\", err.Error())
+					}
+					return err
+
 				}
-				cht.SetValue(float32(v))
-				cht.Update()
+				for err := f(); err != nil && err != exit; err = f() {
+				}
+				if err != exit {
+					cht.Update()
+				}
 				continue
 			}
-			color.Cyan("Invalid command\n")
+			color.Red("/~\\ unknown command or cheat /~\\")
 		}
 	}()
 	<-h.Close
 	for _, c := range cheat.All() {
-		c.SetValue(c.DefaultValue())
+		_ = c.SetValue(c.DefaultValue())
 		c.Update()
 	}
 }

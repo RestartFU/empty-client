@@ -2,13 +2,9 @@ package emp
 
 import (
 	"github.com/TheTitanrain/w32"
-	"github.com/fatih/color"
 	"github.com/kbinani/win"
 	"golang.org/x/sys/windows"
-	"os"
-	"os/signal"
 	"syscall"
-	"time"
 	"unsafe"
 )
 
@@ -20,31 +16,18 @@ type Handler struct {
 	gameID      uintptr
 	gameWindow  win.HWND
 	localPlayer uintptr
-
-	Close chan os.Signal
 }
 
 // New creates a new emp handler.
 func New() *Handler {
-	gameWindow := w32.FindWindowW(nil, windows.StringToUTF16Ptr("Minecraft"))
-	if gameWindow == 0 {
-		color.Cyan("Game window not found. Please open minecraft\n")
-		for gameWindow == 0 {
-			gameWindow = w32.FindWindowW(nil, windows.StringToUTF16Ptr("Minecraft"))
-		}
-		time.Sleep(time.Second * 5)
-	}
-
 	processID := getGameProcessId()
 	h := &Handler{
 		h:          win.OpenProcess(w32.PROCESS_ALL_ACCESS, true, win.DWORD(processID)),
 		processID:  processID,
 		gameID:     getGameModule(processID),
-		gameWindow: win.HWND(gameWindow),
-		Close:      make(chan os.Signal),
+		gameWindow: win.HWND(w32.FindWindowW(nil, windows.StringToUTF16Ptr("Minecraft"))),
 	}
 	h.localPlayer = h.FindAddressOffset(h.GameID()+0x0549E7F8, []uintptr{0x20, 0x0, 0x18, 0xB8, 0x198, 0x0, 0x0})
-	signal.Notify(h.Close, os.Interrupt, syscall.SIGTERM)
 	return h
 }
 

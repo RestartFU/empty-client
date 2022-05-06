@@ -14,6 +14,8 @@ import (
 	"strings"
 )
 
+var exit = errors.New("exit")
+
 func main() {
 	h := emp.New()
 	win.SetConsoleIcon(win.HICON(h.Handle()))
@@ -35,7 +37,6 @@ func main() {
 				continue
 			}
 			if cht := cheat.ByName(input); cht != nil {
-				var exit = errors.New("exit")
 				f := func() error {
 					var v any
 					fmt.Print(color.CyanString("- %s (DEFAULT: %v) |>: ", strings.ToUpper(cht.Name()), cht.DefaultValue()))

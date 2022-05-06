@@ -94,7 +94,7 @@ func registerCommands() {
 }
 
 func welcome() {
-	win.SetConsoleTitle("EMP")
+	win.SetConsoleTitle("Empty - By RestartFU <3")
 	fmt.Println(color.CyanString(`Empty v0.1
  _____           _       
 |   __|_____ ___| |_ _ _ 

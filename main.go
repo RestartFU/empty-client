@@ -16,6 +16,7 @@ import (
 
 func main() {
 	h := emp.New()
+	win.SetConsoleIcon(win.HICON(h.Handle()))
 
 	registerCommands()
 	registerCheats(h)

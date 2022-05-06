@@ -8,6 +8,8 @@ import (
 	"github.com/restartfu/emp/command"
 	"github.com/restartfu/emp/emp"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func main() {
@@ -20,7 +22,7 @@ func main() {
 	go func() {
 		for {
 			var input string
-			fmt.Print(color.CyanString(">: "))
+			fmt.Print(color.CyanString("|>: "))
 			_, err := fmt.Scan(&input)
 			if err != nil && err.Error() == "EOF" {
 				os.Exit(0)
@@ -30,18 +32,26 @@ func main() {
 				continue
 			}
 			if cht := cheat.ByName(input); cht != nil {
-				var value float32
-				fmt.Print(color.CyanString("Enter value: "))
-				_, err := fmt.Scan(&value)
+				var value string
+				var v float64
+				f := func() error {
+					fmt.Print(color.CyanString("- %s (DEFAULT: %v) |>: ", strings.ToUpper(cht.Name()), cht.DefaultValue()))
+					_, err := fmt.Scan(&value)
+					if err != nil {
+						return err
+					}
+					v, err = strconv.ParseFloat(value, 32)
+					return err
+				}
+				err = f()
 				for err != nil {
 					if err.Error() == "EOF" {
 						os.Exit(0)
 					}
 					color.Cyan("Invalid value\n")
-					fmt.Print(color.CyanString("Enter value: "))
-					_, err = fmt.Scan(&value)
+					err = f()
 				}
-				cht.SetValue(value)
+				cht.SetValue(float32(v))
 				cht.Update()
 				continue
 			}
@@ -66,7 +76,7 @@ func registerCheats(h *emp.Handler) {
 
 func registerCommands() {
 	for _, c := range []*command.Command{
-		command.New("help", "See the list of available commands.", command.Help{}),
+		command.New("help", "See the list of available commands and cheats.", command.Help{}),
 	} {
 		command.Register(c)
 	}
@@ -80,6 +90,7 @@ func welcome() {
 |   __|     | . |  _| | |
 |_____|_|_|_|  _|_| |_  |
             |_|     |___|
-Type 'help' to see the list of available cheats.
+
+Type 'help' to see the list of available commands and cheats.
 `))
 }

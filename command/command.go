@@ -2,7 +2,7 @@ package command
 
 import (
 	"fmt"
-	"github.com/restartfu/emp/empty"
+	"github.com/restartfu/empty-client/empty"
 	"sync"
 )
 

@@ -3,7 +3,7 @@ package command
 import (
 	"errors"
 	"github.com/kbinani/win"
-	"github.com/restartfu/emp/empty"
+	"github.com/restartfu/empty-client/empty"
 	"time"
 	"unsafe"
 )

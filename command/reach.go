@@ -3,7 +3,7 @@ package command
 import (
 	"github.com/kbinani/win"
 	"github.com/pkg/errors"
-	"github.com/restartfu/emp/empty"
+	"github.com/restartfu/empty-client/empty"
 	"strconv"
 	"unsafe"
 )

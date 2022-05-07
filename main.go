@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/TheTitanrain/w32"
-	"github.com/fatih/color"
 	"github.com/kbinani/win"
+	"github.com/logrusorgru/aurora"
+	"github.com/mattn/go-colorable"
 	"github.com/restartfu/empty-client/command"
 	"github.com/restartfu/empty-client/empty"
 	"golang.org/x/sys/windows"
+	"log"
 	"os"
 	"os/signal"
 	"strconv"
@@ -15,6 +18,11 @@ import (
 	"syscall"
 	"time"
 )
+
+func init() {
+	log.SetOutput(colorable.NewColorableStdout())
+
+}
 
 var (
 	c = make(chan os.Signal)
@@ -31,12 +39,12 @@ func main() {
 }
 func scan(h *empty.Handler) {
 	for {
-		fmt.Print(color.CyanString("|>: "))
+		fmt.Print(aurora.Cyan("|>: "))
 		if cmd := command.ByName(scanInput()); cmd != nil {
 			if len(cmd.Runnables()) > 1 {
 				var formattedRunnables []string
 				for n, c := range cmd.Runnables() {
-					formattedRunnables = append(formattedRunnables, color.CyanString("[%v] %s - %s", n+1, c.Name(), c.Description()))
+					formattedRunnables = append(formattedRunnables, fmt.Sprintf("[%v] %s - %s", n+1, c.Name(), c.Description()))
 				}
 				fmt.Println(strings.Join(formattedRunnables, "\n") + "\n")
 			}
@@ -45,29 +53,29 @@ func scan(h *empty.Handler) {
 				_ = r.Run(h)
 				continue
 			}
-			fmt.Print(color.CyanString("- %s |>: ", strings.ToUpper(r.Name())))
+			fmt.Print(aurora.Cyan(fmt.Sprintf("- %s |>: ", strings.ToUpper(r.Name()))))
 			err := r.Run(h, strings.Split(scanInput(), " ")...)
 			for err != nil {
-				color.Red("/~\\ %s /~\\", err.Error())
-				fmt.Print(color.CyanString("- %s |>: ", strings.ToUpper(r.Name())))
+				fmt.Println(aurora.Red(fmt.Sprintf("/~\\ %s /~\\", err.Error())))
+				fmt.Print(aurora.Cyan(fmt.Sprintf("- %s |>: ", strings.ToUpper(r.Name()))))
 				err = r.Run(h, strings.Split(scanInput(), " ")...)
 			}
 
 			continue
 		}
-		color.Red("/~\\ unknown command /~\\")
+		fmt.Println(aurora.Red("/~\\ unknown command /~\\"))
 	}
 }
 
 func scanIndex(cmd *command.Command) int {
 	scan := func() (int, error) {
-		fmt.Print(color.CyanString("- %s |>: ", strings.ToUpper(cmd.Name())))
+		fmt.Print(aurora.Cyan(fmt.Sprintf("- %s |>: ", strings.ToUpper(cmd.Name()))))
 		input := scanInput()
 		return strconv.Atoi(input)
 	}
 	index, err := scan()
 	for err != nil {
-		color.Red("/~\\ invalid index /~\\")
+		fmt.Println(aurora.Red("/~\\ invalid index /~\\"))
 		index, err = scan()
 	}
 	return index
@@ -83,19 +91,19 @@ func scanRunnable(cmd *command.Command) command.Runnable {
 	}
 	r, err := scan()
 	for err != nil {
-		color.Red("/~\\ %s /~\\", err.Error())
+		fmt.Println(aurora.Cyan(fmt.Sprintf("/~\\ %s /~\\", err.Error())))
 		r, err = scan()
 	}
 	return r
 }
 
 func scanInput() string {
-	var input string
-	_, err := fmt.Scanln(&input)
-	if err != nil && err.Error() == "EOF" {
-		os.Exit(0)
+	s := bufio.NewScanner(os.Stdin)
+	s.Scan()
+	for strings.TrimSpace(s.Text()) == "" {
+		s.Scan()
 	}
-	return input
+	return strings.Split(strings.TrimSpace(s.Text()), " ")[0]
 }
 
 func handler() *empty.Handler {
@@ -104,7 +112,7 @@ func handler() *empty.Handler {
 	}
 
 	for !open() {
-		color.Cyan("Game window not found. Please open minecraft\n")
+		fmt.Println(aurora.Cyan("Game window not found. Please open minecraft\n"))
 		for !open() {
 			time.Sleep(time.Second)
 		}
@@ -130,7 +138,7 @@ func welcome(h *empty.Handler) {
 	win.SetConsoleIcon(win.HICON(h.Handle()))
 
 	registerCommands(h)
-	fmt.Println(color.CyanString(`Empty v0.1
+	fmt.Println(aurora.Cyan(`Empty v0.1
  _____           _       
 |   __|_____ ___| |_ _ _ 
 |   __|     | . |  _| | |

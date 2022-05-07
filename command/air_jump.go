@@ -36,7 +36,7 @@ func (a AirJump) Run(h *empty.Handler, args ...string) error {
 		a.enabled = false
 		return nil
 	} else {
-		return errors.New("")
+		return errors.New("airjump argument must be either enable or disable")
 	}
 	return nil
 }

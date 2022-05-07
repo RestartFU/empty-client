@@ -1,7 +1,6 @@
 package empty
 
 import (
-	"fmt"
 	"github.com/TheTitanrain/w32"
 	"github.com/kbinani/win"
 	"golang.org/x/sys/windows"
@@ -29,7 +28,6 @@ func New() *Handler {
 		gameWindow: win.HWND(w32.FindWindowW(nil, windows.StringToUTF16Ptr("Minecraft"))),
 	}
 	h.localPlayer = h.FindAddressOffset(h.GameID()+0x0549E7F8, []uintptr{0x20, 0x0, 0x18, 0xB8, 0x198, 0x0, 0x0})
-	fmt.Println(h.localPlayer)
 	return h
 }
 

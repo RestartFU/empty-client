@@ -1,150 +1,135 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/TheTitanrain/w32"
 	"github.com/fatih/color"
 	"github.com/kbinani/win"
-	"github.com/restartfu/emp/cheat"
 	"github.com/restartfu/emp/command"
-	"github.com/restartfu/emp/emp"
+	"github.com/restartfu/emp/empty"
 	"golang.org/x/sys/windows"
-	"io"
 	"os"
-	"os/exec"
 	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
 var (
-	exit   = errors.New("exit")
-	closed bool
-	c      = make(chan os.Signal)
+	c = make(chan os.Signal)
 )
 
-func init() {
-	signal.Notify(c, os.Interrupt)
-}
-
 func main() {
-	go func() {
-		for {
-			if !windowOpen() {
-				closed = true
-				c <- os.Interrupt
-			}
-		}
-	}()
-	for {
-		handle()
-		go scan()
-		<-c
-		cmd := exec.Command("cmd", "/c", "cls")
-		cmd.Stdout = os.Stdout
-		_ = cmd.Run()
-		for _, c := range cheat.All() {
-			_ = c.SetValue(c.DefaultValue())
-			c.Update()
-		}
+	signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGTERM)
+	go scan(handler())
+	<-c
+	for _, c := range command.All() {
+		c.Close()
 	}
+
 }
-
-func scan() {
-	for !closed {
-		var input string
+func scan(h *empty.Handler) {
+	for {
 		fmt.Print(color.CyanString("|>: "))
-		_, err := fmt.Scan(&input)
-		if err != nil && err.Error() == "EOF" {
-			os.Exit(0)
-		}
-		if cmd := command.ByName(input); cmd != nil {
-			cmd.Execute()
-			continue
-		}
-		if cht := cheat.ByName(input); cht != nil {
-			f := func() error {
-				var v any
-				fmt.Print(color.CyanString("- %s (DEFAULT: %v) |>: ", strings.ToUpper(cht.Name()), cht.DefaultValue()))
-
-				_, err := fmt.Scan(&input)
-				if err != nil && err == io.EOF {
-					os.Exit(0)
+		if cmd := command.ByName(scanInput()); cmd != nil {
+			if len(cmd.Runnables()) > 1 {
+				var formattedRunnables []string
+				for n, c := range cmd.Runnables() {
+					formattedRunnables = append(formattedRunnables, color.CyanString("[%v] %s - %s", n+1, c.Name(), c.Description()))
 				}
-				if input == "exit" {
-					return exit
-				}
-
-				v, err = strconv.ParseFloat(input, 32)
-				if err != nil {
-					v = nil
-				}
-
-				err = cht.SetValue(v)
-				if err != nil {
-					color.Red("/~\\ %s /~\\", err.Error())
-				}
-				return err
-
+				fmt.Println(strings.Join(formattedRunnables, "\n") + "\n")
 			}
-			for err := f(); err != nil && err != exit; err = f() {
+			r := scanRunnable(cmd)
+			if !r.HasInput() {
+				_ = r.Run(h)
+				continue
 			}
-			if err != exit {
-				cht.Update()
+			fmt.Print(color.CyanString("- %s |>: ", strings.ToUpper(r.Name())))
+			err := r.Run(h, strings.Split(scanInput(), " ")...)
+			for err != nil {
+				color.Red("/~\\ %s /~\\", err.Error())
+				fmt.Print(color.CyanString("- %s |>: ", strings.ToUpper(r.Name())))
+				err = r.Run(h, strings.Split(scanInput(), " ")...)
 			}
+
 			continue
 		}
 		color.Red("/~\\ unknown command or cheat /~\\")
 	}
 }
 
-func handle() *emp.Handler {
-	waitForWindow()
-	h := emp.New()
-	welcome(h)
-	closed = false
-	return h
+func scanIndex(cmd *command.Command) int {
+	scan := func() (int, error) {
+		fmt.Print(color.CyanString("- %s |>: ", strings.ToUpper(cmd.Name())))
+		input := scanInput()
+		return strconv.Atoi(input)
+	}
+	index, err := scan()
+	for err != nil {
+		color.Red("/~\\ invalid index /~\\")
+		index, err = scan()
+	}
+	return index
 }
 
-func waitForWindow() {
-	for !windowOpen() {
+func scanRunnable(cmd *command.Command) command.Runnable {
+	if len(cmd.Runnables()) == 1 {
+		return cmd.Runnables()[0]
+	}
+	scan := func() (command.Runnable, error) {
+		r, err := cmd.Runnable(scanIndex(cmd) - 1)
+		return r, err
+	}
+	r, err := scan()
+	for err != nil {
+		color.Red("/~\\ %s /~\\", err.Error())
+		r, err = scan()
+	}
+	return r
+}
+
+func scanInput() string {
+	var input string
+	_, err := fmt.Scanln(&input)
+	if err != nil && err.Error() == "EOF" {
+		os.Exit(0)
+	}
+	return input
+}
+
+func handler() *empty.Handler {
+	open := func() bool {
+		return w32.FindWindowW(nil, windows.StringToUTF16Ptr("Minecraft")) != 0
+	}
+
+	for !open() {
 		color.Cyan("Game window not found. Please open minecraft\n")
-		for !windowOpen() {
+		for !open() {
 			time.Sleep(time.Second)
 		}
 		time.Sleep(time.Second * 5)
 	}
+	h := empty.New()
+	welcome(h)
+	return h
 }
 
-func windowOpen() bool {
-	return w32.FindWindowW(nil, windows.StringToUTF16Ptr("Minecraft")) != 0
-}
-
-func registerCheats(h *emp.Handler) {
-	for _, c := range []*cheat.Cheat{
-		cheat.New(h, h.GameID()+0x440C8E0, "reach", "Hurt entities from further away.", 3, &cheat.Reach{}),
-		cheat.New(h, h.LocalPlayer()+0x000001D8, "airjump", "Jump, even in the air. [1: enabled; 0: disabled]", cheat.AirJumpValue, &cheat.AirJump{}),
-	} {
-		cheat.Register(c)
-	}
-}
-
-func registerCommands() {
+func registerCommands(h *empty.Handler) {
 	for _, c := range []*command.Command{
-		command.New("help", "See the list of available commands and cheats.", command.Help{}),
+		command.New(h, "help", "See the list of available commands and cheats.", command.Help{}),
+		command.New(h, "reach", "Hurt entities from a distance.", command.Reach{}),
+		command.New(h, "airjump", "Jump, even while being in the air", &command.AirJump{}),
 	} {
 		command.Register(c)
 	}
 }
 
-func welcome(h *emp.Handler) {
+func welcome(h *empty.Handler) {
 	win.SetConsoleTitle("Empty - By RestartFU <3")
 	win.SetConsoleIcon(win.HICON(h.Handle()))
 
-	registerCommands()
-	registerCheats(h)
+	registerCommands(h)
 	fmt.Println(color.CyanString(`Empty v0.1
  _____           _       
 |   __|_____ ___| |_ _ _ 

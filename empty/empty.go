@@ -1,6 +1,7 @@
-package emp
+package empty
 
 import (
+	"fmt"
 	"github.com/TheTitanrain/w32"
 	"github.com/kbinani/win"
 	"golang.org/x/sys/windows"
@@ -18,7 +19,7 @@ type Handler struct {
 	localPlayer uintptr
 }
 
-// New creates a new emp handler.
+// New creates a new empty handler.
 func New() *Handler {
 	processID := getGameProcessId()
 	h := &Handler{
@@ -28,6 +29,7 @@ func New() *Handler {
 		gameWindow: win.HWND(w32.FindWindowW(nil, windows.StringToUTF16Ptr("Minecraft"))),
 	}
 	h.localPlayer = h.FindAddressOffset(h.GameID()+0x0549E7F8, []uintptr{0x20, 0x0, 0x18, 0xB8, 0x198, 0x0, 0x0})
+	fmt.Println(h.localPlayer)
 	return h
 }
 
@@ -64,6 +66,11 @@ func (h *Handler) FindAddressOffset(providedPtr uintptr, providedOffsets []uintp
 		address += offset
 	}
 	return address
+}
+
+// Focused returns true if the game is focused.
+func (h *Handler) Focused() bool {
+	return win.GetForegroundWindow() == h.GameWindow()
 }
 
 // getGameProcessId returns the process ID of the game process

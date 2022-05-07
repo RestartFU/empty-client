@@ -1,6 +1,10 @@
 package command
 
-import "sync"
+import (
+	"fmt"
+	"github.com/restartfu/emp/empty"
+	"sync"
+)
 
 var (
 	commands   = map[string]*Command{}
@@ -34,17 +38,23 @@ func All() (c []*Command) {
 // Command represents a command which can be executed by typing its name in the console.
 type Command struct {
 	runnables []Runnable
+	handler   *empty.Handler
+	input     bool
 
 	name, description string
 }
 
 // New creates a new Command.
-func New(name, description string, runnables ...Runnable) *Command {
-	return &Command{
+func New(handler *empty.Handler, name, description string, runnables ...Runnable) *Command {
+	c := &Command{
+		handler:     handler,
 		name:        name,
 		description: description,
-		runnables:   runnables,
 	}
+	for _, r := range runnables {
+		c.runnables = append(c.runnables, r)
+	}
+	return c
 }
 
 // Name returns the name of the command.
@@ -57,9 +67,24 @@ func (cmd *Command) Description() string {
 	return cmd.description
 }
 
-// Execute executes the command.
-func (cmd *Command) Execute() {
-	for _, runnable := range cmd.runnables {
-		runnable.Run()
+// Runnables returns the runnables of the command.
+func (cmd *Command) Runnables() []Runnable {
+	return cmd.runnables
+}
+
+// Runnable returns the runnable with the given index.
+func (cmd *Command) Runnable(index int) (Runnable, error) {
+	if len(cmd.runnables)-1 < index || index < 0 {
+		return nil, fmt.Errorf("unknown index: '%v'", index)
+	}
+	return cmd.runnables[index], nil
+}
+
+// Close closes the command.
+func (cmd *Command) Close() {
+	for _, r := range cmd.runnables {
+		if c, ok := r.(closeable); ok {
+			c.close(cmd.handler)
+		}
 	}
 }

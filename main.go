@@ -55,7 +55,7 @@ func scan(h *empty.Handler) {
 
 			continue
 		}
-		color.Red("/~\\ unknown command or cheat /~\\")
+		color.Red("/~\\ unknown command /~\\")
 	}
 }
 

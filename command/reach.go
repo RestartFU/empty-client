@@ -18,13 +18,32 @@ func (r Reach) Run(h *empty.Handler, args ...string) error {
 		return errors.New("reach value must be a float.")
 	}
 	value := float32(v)
-	var num win.DWORD
-	var bytesWritten win.SIZE_T
-	address := win.LPVOID(h.GameID() + 0x440C8E0)
 
-	win.VirtualProtectEx(h.Handle(), address, 4, 0x40, &num)
-	win.WriteProcessMemory(h.Handle(), address, uintptr(unsafe.Pointer(&value)), 4, &bytesWritten)
+	survivalBytes := []byte{0xF3, 0x44, 0x0F, 0x10, 0x3D, 0x85, 0x73, 0x83, 0x04}
+	nop := []byte{0x90, 0x90}
+
+	r.PatchBytes(h, win.LPVOID(h.GameID()+0x5AA608), nop, win.SIZE_T(len(nop)))
+	r.PatchBytesFloat32(h, win.LPVOID(h.GameID()+0x4DE1998), value, win.SIZE_T(unsafe.Sizeof(value)))
+	r.PatchBytes(h, win.LPVOID(h.GameID()+0x5AA60A), survivalBytes, win.SIZE_T(len(survivalBytes)))
 	return nil
+}
+
+func (r Reach) PatchBytesFloat32(h *empty.Handler, dst win.LPVOID, value float32, size win.SIZE_T) {
+	var oldprotect win.DWORD
+	var bytesWritten win.SIZE_T
+
+	win.VirtualProtectEx(h.Handle(), dst, size, 0x40, &oldprotect)
+	win.WriteProcessMemory(h.Handle(), dst, uintptr(unsafe.Pointer(&value)), size, &bytesWritten)
+	win.VirtualProtectEx(h.Handle(), dst, size, oldprotect, &oldprotect)
+}
+
+func (r Reach) PatchBytes(h *empty.Handler, dst win.LPVOID, value []byte, size win.SIZE_T) {
+	var oldprotect win.DWORD
+	var bytesWritten win.SIZE_T
+
+	win.VirtualProtectEx(h.Handle(), dst, size, 0x40, &oldprotect)
+	win.WriteProcessMemory(h.Handle(), dst, uintptr(unsafe.Pointer(&value[0])), size, &bytesWritten)
+	win.VirtualProtectEx(h.Handle(), dst, size, oldprotect, &oldprotect)
 }
 
 func (r Reach) Name() string {

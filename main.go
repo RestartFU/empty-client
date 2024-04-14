@@ -39,7 +39,7 @@ func main() {
 }
 func scan(h *empty.Handler) {
 	for {
-		fmt.Print(aurora.Cyan("|>: "))
+		fmt.Print(aurora.Yellow("-> "))
 		if cmd := command.ByName(scanInput()); cmd != nil {
 			if len(cmd.Runnables()) > 1 {
 				var formattedRunnables []string
@@ -53,29 +53,29 @@ func scan(h *empty.Handler) {
 				_ = r.Run(h)
 				continue
 			}
-			fmt.Print(aurora.Cyan(fmt.Sprintf("- %s |>: ", strings.ToUpper(r.Name()))))
+			fmt.Print(aurora.Yellow(fmt.Sprintf("%s -> ", strings.ToUpper(r.Name()))))
 			err := r.Run(h, strings.Split(scanInput(), " ")...)
 			for err != nil {
-				fmt.Println(aurora.Red(fmt.Sprintf("/~\\ %s /~\\", err.Error())))
-				fmt.Print(aurora.Cyan(fmt.Sprintf("- %s |>: ", strings.ToUpper(r.Name()))))
+				fmt.Println(aurora.Red(fmt.Sprintf("%s", err.Error())))
+				fmt.Print(aurora.Yellow(fmt.Sprintf("%s -> ", strings.ToUpper(r.Name()))))
 				err = r.Run(h, strings.Split(scanInput(), " ")...)
 			}
 
 			continue
 		}
-		fmt.Println(aurora.Red("/~\\ unknown command /~\\"))
+		fmt.Println(aurora.Red("Unknown command, try help"))
 	}
 }
 
 func scanIndex(cmd *command.Command) int {
 	scan := func() (int, error) {
-		fmt.Print(aurora.Cyan(fmt.Sprintf("- %s |>: ", strings.ToUpper(cmd.Name()))))
+		fmt.Print(aurora.Yellow(fmt.Sprintf("%s -> ", strings.ToUpper(cmd.Name()))))
 		input := scanInput()
 		return strconv.Atoi(input)
 	}
 	index, err := scan()
 	for err != nil {
-		fmt.Println(aurora.Red("/~\\ invalid index /~\\"))
+		fmt.Println(aurora.Red("Invalid prompt"))
 		index, err = scan()
 	}
 	return index
@@ -91,7 +91,7 @@ func scanRunnable(cmd *command.Command) command.Runnable {
 	}
 	r, err := scan()
 	for err != nil {
-		fmt.Println(aurora.Cyan(fmt.Sprintf("/~\\ %s /~\\", err.Error())))
+		fmt.Println(aurora.Yellow(fmt.Sprintf("[ERROR] %s", err.Error())))
 		r, err = scan()
 	}
 	return r
@@ -112,7 +112,7 @@ func handler() *empty.Handler {
 	}
 
 	for !open() {
-		fmt.Println(aurora.Cyan("Game window not found. Please open minecraft\n"))
+		fmt.Println(aurora.Yellow("Game window not found. Please open minecraft\n"))
 		for !open() {
 			time.Sleep(time.Second)
 		}
@@ -127,7 +127,7 @@ func registerCommands(h *empty.Handler) {
 	for _, c := range []*command.Command{
 		command.New(h, "help", "See the list of available commands and cheats.", command.Help{}),
 		command.New(h, "reach", "Hurt entities from a distance.", command.Reach{}),
-		command.New(h, "airjump", "Jump, even while being in the air", &command.AirJump{}),
+		command.New(h, "timer", "Increase the speed of your games.", command.Timer{}),
 	} {
 		command.Register(c)
 	}
@@ -138,12 +138,13 @@ func welcome(h *empty.Handler) {
 	win.SetConsoleIcon(win.HICON(h.Handle()))
 
 	registerCommands(h)
-	fmt.Println(aurora.Cyan(`Empty v0.1
- _____           _       
-|   __|_____ ___| |_ _ _ 
-|   __|     | . |  _| | |
-|_____|_|_|_|  _|_| |_  |
-            |_|     |___|
+	fmt.Println(aurora.Yellow(`Empty v0.2
+███████╗███╗   ███╗██████╗ ████████╗██╗   ██╗
+██╔════╝████╗ ████║██╔══██╗╚══██╔══╝╚██╗ ██╔╝
+█████╗  ██╔████╔██║██████╔╝   ██║    ╚████╔╝ 
+██╔══╝  ██║╚██╔╝██║██╔═══╝    ██║     ╚██╔╝  
+███████╗██║ ╚═╝ ██║██║        ██║      ██║   
+╚══════╝╚═╝     ╚═╝╚═╝        ╚═╝      ╚═╝   
 
 Type 'help' to see the list of available commands and cheats.
 `))

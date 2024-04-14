@@ -11,7 +11,7 @@ type Help struct{}
 
 func (h Help) Run(*empty.Handler, ...string) error {
 	for _, c := range All() {
-		fmt.Println(color.CyanString("%s - %s", strings.ToUpper(c.Name()), c.Description()))
+		fmt.Println(color.YellowString("%s - %s", strings.ToUpper(c.Name()), c.Description()))
 	}
 	fmt.Println()
 	return nil

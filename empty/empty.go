@@ -12,10 +12,9 @@ import (
 type Handler struct {
 	h win.HANDLE
 
-	processID   uint32
-	gameID      uintptr
-	gameWindow  win.HWND
-	localPlayer uintptr
+	processID  uint32
+	gameID     uintptr
+	gameWindow win.HWND
 }
 
 // New creates a new empty handler.
@@ -27,7 +26,6 @@ func New() *Handler {
 		gameID:     getGameModule(processID),
 		gameWindow: win.HWND(w32.FindWindowW(nil, windows.StringToUTF16Ptr("Minecraft"))),
 	}
-	h.localPlayer = h.FindAddressOffset(h.GameID()+0x0549E7F8, []uintptr{0x20, 0x0, 0x18, 0xB8, 0x198, 0x0, 0x0})
 	return h
 }
 
@@ -49,11 +47,6 @@ func (h *Handler) GameID() uintptr {
 // GameWindow returns the game window.
 func (h *Handler) GameWindow() win.HWND {
 	return h.gameWindow
-}
-
-// LocalPlayer returns the address of the local player.
-func (h *Handler) LocalPlayer() uintptr {
-	return h.localPlayer
 }
 
 // FindAddressOffset finds returns an address with the given offset.

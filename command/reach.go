@@ -19,12 +19,12 @@ func (r Reach) Run(h *empty.Handler, args ...string) error {
 	}
 	value := float32(v)
 
-	survivalBytes := []byte{0xF3, 0x44, 0x0F, 0x10, 0x3D, 0x85, 0x73, 0x83, 0x04}
+	survivalBytes := []byte{ 0xF3, 0x44, 0x0F, 0x10, 0x3D, 0x7D, 0x22, 0xAF, 0x04  }
 	nop := []byte{0x90, 0x90}
 
-	r.PatchBytes(h, win.LPVOID(h.GameID()+0x5AA608), nop, win.SIZE_T(len(nop)))
-	r.PatchBytesFloat32(h, win.LPVOID(h.GameID()+0x4DE1998), value, win.SIZE_T(unsafe.Sizeof(value)))
-	r.PatchBytes(h, win.LPVOID(h.GameID()+0x5AA60A), survivalBytes, win.SIZE_T(len(survivalBytes)))
+	r.PatchBytes(h, win.LPVOID(h.GameID()+0x5CD7F8), nop, win.SIZE_T(len(nop)))
+	r.PatchBytesFloat32(h, win.LPVOID(h.GameID()+0x50BFA80), value, win.SIZE_T(unsafe.Sizeof(value)))
+	r.PatchBytes(h, win.LPVOID(h.GameID()+0x5CD7FA), survivalBytes, win.SIZE_T(len(survivalBytes)))
 	return nil
 }
 
